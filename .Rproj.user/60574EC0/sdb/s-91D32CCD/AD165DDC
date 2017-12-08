@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "make_annotation<- function(expDesignFiles, controlNames, outputName){\n#A function to make the (keys) file that is used by both SAINTq('keys') and MsStats\n#NOTE: good practice to have your ExpDesignTemplate to include a 'Condition' column.\n  #MODIFIED: now concatenates multiple annotation files\n  #controlNames is a vector with the string names of the control conditions\n  #e.g. c(\"GFP\", \"Vector\")\n  expDesignList <- lapply(expDesignFiles, read.table, sep=\"\\t\", header=T, stringsAsFactors = F)\n  print(expDesignList)\n  expDesign <- do.call(rbind, expDesignList)\n  expDesign=expDesign[expDesign$Experiment!=\"bsa\" & expDesign$Experiment!=\"yeast\",] #remove blanks\n  \n  BioReplicaSaint<-matrix(ncol = 2, nrow = dim(expDesign[2]))\n  for(c in 1:length(expDesign$Condition)){\n    BioReplicaSaint[c,] <- c(expDesign$Condition[c], sum(BioReplicaSaint[,1]==expDesign$Condition[c], na.rm = T)+1)\n  }\n  BioReplicaSaint2 = paste(BioReplicaSaint[,1], BioReplicaSaint[,2], sep=\"_\")\n  print(head(expDesign))\n  f<-data.frame(Raw.file=expDesign$Name, Condition = expDesign$Condition,\n                BioReplicate = BioReplicaSaint[,2], Run=1:length(expDesign$Name), \n                IsotopeLabelType=\"L\", SAINT=\"T\", BioReplicaSaint=BioReplicaSaint2, \n                stringsAsFactors = F)\n  #sets the controls\n  f[f$Condition %in% controlNames,]$SAINT<-\"C\"\n  write.table(f, file = outputName, sep=\"\\t\", col.names=T, row.names=F, quote = F)\n}\n\nremoveLowPept <- function(m, proteinGroups=proteinGroups){\n#adds column to peptide matrix, marking those from low peptide proteins\n  proteinGroupsShort <- proteinGroups\n  proteinGroupsShort$Protein.IDs <- gsub(\";.*\", \"\", proteinGroupsShort$Protein.IDs)\n  proteinGroupsShort$Peptide.counts..razor.unique. <- as.numeric(gsub(\";.*\", \"\", proteinGroupsShort$Peptide.counts..razor.unique.))\n  print(str(proteinGroupsShort))\n  proteinGroupsShort <- proteinGroupsShort[proteinGroupsShort$Peptide.counts..razor.unique.<2,]\n  \n  m[row.names(m) %in% proteinGroupsShort$Protein.IDs,1] <- \"LOWPEPT\"\n  return(m)\n}\n\nimpute_missing_values <- function(v){\n  #Using the \"Perseus method\": inpute missing as a random sample from a normal distribution 2.5 stdevs\n  #below actual nonzero population, and an SD of 0.3*population\n  plot(density(log10(v[v!=0])))\n  m <- mean(log10(v[v!=0]))\n  sd <- sd(log10(v[v!=0]))\n  v[v==0] <- 10^(rnorm(n = length(v[v==0]), mean = m-2.5*sd, sd=0.3*sd)) #Using perseus defaults\n  lines(density(log10(v)))\n  return(v)\n}\n\ncomputeZ <- function(column){\n#Computing Z-scores (only when taking the Inf values out of the equation)\n  avg <- mean(column)\n  stdev <- sd(column)\n  #z <- (column-avg)/stdev\n  pval <- pnorm(column, mean = avg, sd = stdev, lower.tail = FALSE)\n  return(pval)\n}",
+    "created" : 1512118112369.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "82162742",
+    "id" : "AD165DDC",
+    "lastKnownWriteTime" : 1512712630,
+    "last_content_update" : 1512712630015,
+    "path" : "~/Documents/Projects/finalAPMS_analysis/auxiliaryFunctions.R",
+    "project_path" : "auxiliaryFunctions.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
