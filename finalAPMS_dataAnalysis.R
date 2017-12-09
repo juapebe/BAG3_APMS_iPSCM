@@ -1,9 +1,11 @@
 ####LOAD DEPENDENCIES####
 library(reshape2)
 library(ggplot2)
+library(gridExtra)
 library(MSstats)
 library(pheatmap)
 source("./process4MSStats_3.R")
+source("./process4saintq_2.R")
 source("./auxiliaryFunctions.R")
 
 ####LOAD AND PREPARE FILES####
@@ -56,6 +58,9 @@ proteinLong$condition <- droplevels(proteinLong$condition)
 peptideLong <- peptideLong[peptideLong$condition %in% c("WTc11", "A4", "K22"),]
 peptideLong$condition <- droplevels(peptideLong$condition)
 
+proteinWide <- proteinWide[, grepl("^WTc11|^A4|^K22|Proteins", names(proteinWide))]
+peptideWide <- peptideWide[, grepl("^WTc11|^A4|^K22|Proteins|feature", names(peptideWide))]
+
 ###QC plots
 #Intensity of the iRT peptides per run
 #most common charge is 2. use only that one for normalization and plotting
@@ -73,3 +78,7 @@ p <- ggplot(data = bag3Peptides,
 p+geom_point() + geom_line() +  ylim(c(0, 32)) + theme(legend.position="none") + theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ggsave(filename = "./plots/bag3Peptide_intensitites.pdf", device = "pdf")
 
+#Compare replicates. use auxiliary function
+compare_replicates(peptideWide, "WTc11")
+compare_replicates(peptideWide, "A4")
+compare_replicates(peptideWide, "K22")

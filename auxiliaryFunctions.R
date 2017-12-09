@@ -24,6 +24,19 @@ make_annotation<- function(expDesignFiles, controlNames, outputName){
   write.table(f, file = outputName, sep="\t", col.names=T, row.names=F, quote = F)
 }
 
+compare_replicates <- function(peptideWide, cond){
+  #Given the matrix of peptides and the name of the condition (bait), plot comparisons of replicates
+  pept <- peptideWide[, grep(pattern = cond, names(peptideWide))]
+  plots <- apply(X = expand.grid(names(pept), names(pept)), MARGIN = 1, function(x){
+    ggplot(data=peptideWide, aes(x=peptideWide[,x[[1]]], y=peptideWide[x[[2]]])) + 
+      geom_point(size=0.7, alpha=0.5) + labs(x=x[[1]], y=x[[2]]) + geom_smooth() + geom_abline(intercept=0, slope=1) + 
+      xlim(c(0, max(peptideWide[,x[[1]]]))) + ylim(c(0, max(peptideWide[x[[2]]]))) + 
+      theme(axis.text.x=element_blank(), axis.text.y=element_blank()) + scale_x_continuous(trans='log2') + scale_y_continuous(trans='log2')
+  })
+  px <- grid.arrange(grobs=plots, ncol=4, main=paste("Comparing Replicates for", cond))
+  ggsave(plot = px, filename = paste0("./plots/replicates_", cond, ".pdf"), device = "pdf")
+}
+
 removeLowPept <- function(m, proteinGroups=proteinGroups){
 #adds column to peptide matrix, marking those from low peptide proteins
   proteinGroupsShort <- proteinGroups
